@@ -2998,6 +2998,16 @@ bool jpeg_decoder_file_stream::open(const char *Pfilename)
 #endif
   return m_pFile != NULL;
 }
+bool jpeg_decoder_file_stream::setstdin()
+{
+  close();
+
+  m_eof_flag = false;
+  m_error_flag = false;
+
+  m_pFile = stdin;
+  return m_pFile != NULL;
+}
 
 int jpeg_decoder_file_stream::read(uint8 *pBuf, int max_bytes_to_read, bool *pEOF_flag)
 {
@@ -3155,6 +3165,14 @@ unsigned char *decompress_jpeg_image_from_stream(jpeg_decoder_stream *pStream, i
   }
 
   return pImage_data;
+}
+
+unsigned char *decompress_jpeg_image_from_stdin(int size, int *width, int *height, int *actual_comps, int req_comps)
+{
+  jpgd::jpeg_decoder_file_stream file_stream;
+	file_stream.setstdin();
+
+  return decompress_jpeg_image_from_stream(&file_stream, width, height, actual_comps, req_comps);
 }
 
 unsigned char *decompress_jpeg_image_from_memory(const unsigned char *pSrc_data, int src_data_size, int *width, int *height, int *actual_comps, int req_comps)

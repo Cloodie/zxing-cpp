@@ -30,6 +30,7 @@ namespace jpgd
   // Requesting a 8 or 32bpp image is currently a little faster than 24bpp because the jpeg_decoder class itself currently always unpacks to either 8 or 32bpp.
   unsigned char *decompress_jpeg_image_from_memory(const unsigned char *pSrc_data, int src_data_size, int *width, int *height, int *actual_comps, int req_comps);
   unsigned char *decompress_jpeg_image_from_file(const char *pSrc_filename, int *width, int *height, int *actual_comps, int req_comps);
+  unsigned char *decompress_jpeg_image_from_stdin(int size, int *width, int *height, int *actual_comps, int req_comps);
 
   // Success/failure error codes.
   enum jpgd_status
@@ -80,6 +81,7 @@ namespace jpgd
     virtual ~jpeg_decoder_file_stream();
     
     bool open(const char *Pfilename);
+		bool setstdin();
     void close();
 
     virtual int read(uint8 *pBuf, int max_bytes_to_read, bool *pEOF_flag);

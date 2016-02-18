@@ -18,6 +18,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <stdlib.h>
 #include "ImageReaderSource.h"
 #include <zxing/common/Counted.h>
 #include <zxing/Binarizer.h>
@@ -45,14 +46,12 @@ using namespace zxing::qrcode;
 
 namespace {
 
-bool more = false;
-bool test_mode = false;
 bool try_harder = false;
 bool search_multi = false;
 bool use_hybrid = false;
 bool use_global = false;
-bool verbose = false;
 
+string supercomma="";
 }
 
 vector<Ref<Result> > decode(Ref<BinaryBitmap> image, DecodeHints hints) {
@@ -101,6 +100,7 @@ int read_image(Ref<LuminanceSource> source, bool hybrid, string expected) {
     res = -5;
   }
 
+/*
   if (test_mode && results.size() == 1) {
     std::string result = results[0]->getText()->getText();
     if (expected.empty()) {
@@ -116,30 +116,24 @@ int read_image(Ref<LuminanceSource> source, bool hybrid, string expected) {
       }
     }
   }
-
-  if (res != 0 && (verbose || (use_global ^ use_hybrid))) {
-    cout << (hybrid ? "Hybrid" : "Global")
-         << " binarizer failed: " << cell_result << endl;
-  } else if (!test_mode) {
-    if (verbose) {
-      cout << (hybrid ? "Hybrid" : "Global")
-           << " binarizer succeeded: " << endl;
-    }
+*/
+  if (res == 0) {
     for (size_t i = 0; i < results.size(); i++) {
-      if (more) {
-        cout << "  Format: "
-             << BarcodeFormat::barcodeFormatNames[results[i]->getBarcodeFormat()]
-             << endl;
+				string comma="";
+        cout << supercomma << "{\"format\":\""
+             << BarcodeFormat::barcodeFormatNames[results[i]->getBarcodeFormat()];
+				cout << "\", \"points\":[";
         for (int j = 0; j < results[i]->getResultPoints()->size(); j++) {
-          cout << "  Point[" << j <<  "]: "
-               << results[i]->getResultPoints()[j]->getX() << " "
-               << results[i]->getResultPoints()[j]->getY() << endl;
+          cout << comma << "["
+               << results[i]->getResultPoints()[j]->getX() << ","
+               << results[i]->getResultPoints()[j]->getY() << "]";
+					comma = ",";
         }
-      }
-      if (verbose) {
-        cout << "    ";
-      }
-      cout << results[i]->getText()->getText() << endl;
+        cout << "], \"binarizer\":\"";
+      cout << (hybrid ? "hybrid" : "global");
+        cout << "\", \"result\":\"";
+      cout << results[i]->getText()->getText() << "\"}";
+			supercomma = ",\n";
     }
   }
 
@@ -180,9 +174,9 @@ string read_expected(string imagefilename) {
 }
 
 int main(int argc, char** argv) {
-  if (argc <= 1) {
-    cout << "Usage: " << argv[0] << " [OPTION]... <IMAGE>..." << endl
-         << "Read barcodes from each IMAGE file." << endl
+  if (argc != 3) {
+    cout << "Usage: " << argv[0] << " MIME SIZE" << endl;
+/*         << "Read barcodes from each IMAGE file." << endl
          << endl
          << "Options:" << endl
          << "  (-h|--hybrid)             use the hybrid binarizer (default)" << endl
@@ -195,103 +189,30 @@ int main(int argc, char** argv) {
          << endl
          << "Example usage:" << endl
          << "  zxing --test-mode *.jpg" << endl
-         << endl;
+         << endl;*/
     return 1;
   }
-
-  int total = 0;
-  int gonly = 0;
-  int honly = 0;
-  int both = 0;
-  int neither = 0;
-
-  for (int i = 1; i < argc; i++) {
-    string filename = argv[i];
-    if (filename.compare("--verbose") == 0 ||
-        filename.compare("-v") == 0) {
-      verbose = true;
-      continue;
-    }
-    if (filename.compare("--hybrid") == 0 ||
-        filename.compare("-h") == 0) {
-      use_hybrid = true;
-      continue;
-    }
-    if (filename.compare("--global") == 0 ||
-        filename.compare("-g") == 0) {
-      use_global = true;
-      continue;
-    }
-    if (filename.compare("--more") == 0) {
-      more = true;
-      continue;
-    }
-    if (filename.compare("--test-mode") == 0) {
-      test_mode = true;
-      continue;
-    }
-    if (filename.compare("--try-harder") == 0) {
-      try_harder = true;
-      continue;
-    }
-    if (filename.compare("--search-multi") == 0){
-      search_multi = true;
-      continue;
-    }
-
-    if (filename.length() > 3 &&
-        (filename.substr(filename.length() - 3, 3).compare("txt") == 0 ||
-         filename.substr(filename.length() - 3, 3).compare("bin") == 0)) {
-      continue;
-    }
 
     if (!use_global && !use_hybrid) {
       use_global = use_hybrid = true;
     }
-
-    if (test_mode) {
-      cerr << "Testing: " << filename << endl;
-    }
-
     Ref<LuminanceSource> source;
     try {
-      source = ImageReaderSource::create(filename);
+      source = ImageReaderSource::create(argv[1],atoi(argv[2]));
     } catch (const zxing::IllegalArgumentException &e) {
-      cerr << e.what() << " (ignoring)" << endl;
-      continue;
+      cout << "{\"status\":\"error\",\"message\":\"" << e.what() << "\"}" << endl;
+			return -1;
     }
 
-    string expected = read_expected(filename);
+    string expected = "";
 
-    int gresult = 1;
-    int hresult = 1;
-    if (use_hybrid) {
-      hresult = read_image(source, true, expected);
-    }
-    if (use_global && (verbose || hresult != 0)) {
-      gresult = read_image(source, false, expected);
-      if (!verbose && gresult != 0) {
-        cout << "decoding failed" << endl;
-      }
-    }
-    gresult = gresult == 0;
-    hresult = hresult == 0;
-    gonly += gresult && !hresult;
-    honly += hresult && !gresult;
-    both += gresult && hresult;
-    neither += !gresult && !hresult;
-    total = total + 1;
-  }
-
-  if (test_mode) {
-    cout << endl
-         << "Summary:" << endl
-         << " " << total << " images tested total," << endl
-         << " " << (honly + both)  << " passed hybrid, " << (gonly + both)
-         << " passed global, " << both << " pass both, " << endl
-         << " " << honly << " passed only hybrid, " << gonly
-         << " passed only global, " << neither << " pass neither." << endl;
-  }
-
+		cout << "{\"results\":[";
+		int hresult = read_image(source, false, expected);
+		if (hresult) hresult = read_image(source, true, expected);
+		if (hresult) {
+			cout << "],\"status\":\"error\"}" << endl;
+		} else {
+			cout << "],\"status\":\"ok\"}" << endl;
+		}
   return 0;
 }

@@ -48,13 +48,12 @@ inline char ImageReaderSource::convertPixel(char const* pixel_) const {
 ImageReaderSource::ImageReaderSource(ArrayRef<char> image_, int width, int height, int comps_)
     : Super(width, height), image(image_), comps(comps_) {}
 
-Ref<LuminanceSource> ImageReaderSource::create(string const& filename) {
-  string extension = filename.substr(filename.find_last_of(".") + 1);
-  std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+Ref<LuminanceSource> ImageReaderSource::create(string const& mime, int size) {
   int width, height;
   int comps = 0;
+string filename="t.jpg";
   zxing::ArrayRef<char> image;
-  if (extension == "png") {
+  if (mime == "image/png") {
     std::vector<unsigned char> out;
 
     { unsigned w, h;
@@ -71,15 +70,15 @@ Ref<LuminanceSource> ImageReaderSource::create(string const& filename) {
     comps = 4;
     image = zxing::ArrayRef<char>(4 * width * height);
     memcpy(&image[0], &out[0], image->size());
-  } else if (extension == "jpg" || extension == "jpeg") {
-    char *buffer = reinterpret_cast<char*>(jpgd::decompress_jpeg_image_from_file(
-        filename.c_str(), &width, &height, &comps, 4));
+  } else if (mime == "image/jpg" || mime == "image/jpeg") {
+    char *buffer = reinterpret_cast<char*>(jpgd::decompress_jpeg_image_from_stdin(
+        size, &width, &height, &comps, 4));
     image = zxing::ArrayRef<char>(buffer, 4 * width * height);
     free(buffer);
   }
   if (!image) {
     ostringstream msg;
-    msg << "Loading \"" << filename << "\" failed.";
+    msg << "Loading \"" << mime << "\" failed.";
     throw zxing::IllegalArgumentException(msg.str().c_str());
   }
 
