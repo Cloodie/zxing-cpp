@@ -210,6 +210,9 @@ Same as the other decode functions, but instead takes a filename as input.
 unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
                 const std::string& filename,
                 LodePNGColorType colortype = LCT_RGBA, unsigned bitdepth = 8);
+unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
+                int size,
+                LodePNGColorType colortype = LCT_RGBA, unsigned bitdepth = 8);
 #endif //LODEPNG_COMPILE_DISK
 #endif //LODEPNG_COMPILE_DECODER
 
@@ -817,6 +820,9 @@ class State : public LodePNGState
 unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
                 State& state,
                 const unsigned char* in, size_t insize);
+unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
+                State& state,
+                size_t insize);
 unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
                 State& state,
                 const std::vector<unsigned char>& in);

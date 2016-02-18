@@ -57,7 +57,7 @@ string filename="t.jpg";
     std::vector<unsigned char> out;
 
     { unsigned w, h;
-      unsigned error = lodepng::decode(out, w, h, filename);
+      unsigned error = lodepng::decode(out, w, h, size);
       if (error) {
         ostringstream msg;
         msg << "Error while loading '" << lodepng_error_text(error) << "'";

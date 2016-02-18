@@ -6180,6 +6180,15 @@ unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h,
 }
 
 #ifdef LODEPNG_COMPILE_DISK
+unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, int size,
+                LodePNGColorType colortype, unsigned bitdepth)
+{
+  std::vector<unsigned char> buffer;
+
+	buffer.resize(size);
+	fread((char*)(&buffer[0]),size,1,stdin);
+  return decode(out, w, h, buffer, colortype, bitdepth);
+}
 unsigned decode(std::vector<unsigned char>& out, unsigned& w, unsigned& h, const std::string& filename,
                 LodePNGColorType colortype, unsigned bitdepth)
 {
