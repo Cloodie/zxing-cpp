@@ -39,6 +39,53 @@
 #include <zxing/multi/MultipleBarcodeReader.h>
 #include <zxing/multi/GenericMultipleBarcodeReader.h>
 
+#include <stdio.h>
+#include <ctype.h>
+
+void print_str(const unsigned char* str) {
+
+	while (*str) {
+		/*
+\'	single quote	byte 0x27
+\"	double quote	byte 0x22
+\?	question mark	byte 0x3f
+\\	backslash	byte 0x5c
+\0	null character	byte 0x00
+\a	audible bell	byte 0x07
+\b	backspace	byte 0x08
+\f	form feed - new page	byte 0x0c
+\n	line feed - new line	byte 0x0a
+\r	carriage return	byte 0x0d
+\t	horizontal tab	byte 0x09
+\v	vertical tab	byte 0x0b
+\nnn	arbitrary octal value	byte nnn
+\xnn	arbitrary hexadecimal value	byte nn
+*/
+			switch(*str) {
+			case 0x27:printf("\\'");break; /* single quote	byte */
+			case 0x22:printf("\\\"");break; /* double quote	byte */
+			case 0x3f:printf("\\?");break; /* question mark	byte */
+			case 0x5c:printf("\\\\");break; /* backslash	byte */
+			case 0x00:printf("\\0");break; /* null character	byte */
+			case 0x07:printf("\\a");break; /* audible bell	byte */
+			case 0x08:printf("\\b");break; /* backspace	byte */
+			case 0x0c:printf("\\f");break; /* form feed - new page	byte */
+			case 0x0a:printf("\\n");break; /* line feed - new line	byte */
+			case 0x0d:printf("\\r");break; /* carriage return	byte */
+			case 0x09:printf("\\t");break; /* horizontal tab	byte */
+			case 0x0b:printf("\\v");break; /* vertical tab	byte */
+			default:
+				if (isprint(*str)) {
+					printf("%c",*str);
+				} else {
+					printf("\\u00%02x",*str);
+				}
+				break;
+		}
+		str++;
+	}
+}
+
 using namespace std;
 using namespace zxing;
 using namespace zxing::multi;
@@ -132,7 +179,8 @@ int read_image(Ref<LuminanceSource> source, bool hybrid, string expected) {
         cout << "], \"binarizer\":\"";
       cout << (hybrid ? "hybrid" : "global");
         cout << "\", \"result\":\"";
-      cout << results[i]->getText()->getText() << "\"}";
+			print_str((const unsigned char*)(results[i]->getText()->getText().c_str()));
+			cout << "\"}";
 			supercomma = ",\n";
     }
   }
